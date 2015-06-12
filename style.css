@@ -1,0 +1,16 @@
+body{background: black;overflow:hidden}
+#wrapper{
+	position:absolute;
+	left:0px;right:0px;top:0px;bottom:0px;
+}
+canvas{
+	cursor: url(sprites/cursor.png), auto;
+	position:absolute;
+	border:0px solid #aaa;
+}
+.logo{
+	position:absolute;
+	left:50%;top:0px;height:100px;width:200px;
+	transform: translate(-50%,0);
+	cursor: url(sprites/cursor1.png), auto;
+}
