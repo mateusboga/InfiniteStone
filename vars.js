@@ -1,18 +1,36 @@
+/*
+
+
+
+*/
 var fps = 60, volume = 1;
 var C1 = document.getElementById("C1"); ctx1 = C1.getContext("2d");
-var mouse = {x:0,y:0}, mousepress = false, middlepress = false, rightpress = false;
+var mouse = {x:C1.width/2,y:0}, mousepress = false, middlepress = false, rightpress = false;
+var Loading = 0, Ready = false;
+var before = new Date();
+
+C1.draggable = false;
 
 //Math
 var PI = Math.pi, Lakh = 100000, Crore = 10000000, Arab = 1000000000, Padm = 1000000000000000;
 var Million = Math.pow(1000,1+1), Billion = Math.pow(1000,2+1), Trillion = Math.pow(1000,3+1), Quadrillion = Math.pow(1000,4+1), Quintillion = Math.pow(1000,5+1), Sextillion = Math.pow(1000,6+1), Septillion = Math.pow(1000,7+1);
 
 //sprites
+var cur = new Image(); cur.src = "sprites/cursor.png";
+var cur1 = new Image(); cur1.src = "sprites/cursor.png";
+var cur1_mine = new Image(); cur1_mine.src = "sprites/cursor_mine.png";
+var cur2_mine = new Image(); cur2_mine.src = "sprites/cursor_mine2.png";
+
+var bg = new Image(); bg.src = "sprites/background1.png";
+
 var stone1 = new Image(); stone1.src = "sprites/stone.png";
 var audioicon = new Image(); audioicon.src = "sprites/audioicon.png";
+var audioslider = new Image(); audioslider.src = "sprites/audioslider.png";
 var stone_par = new Image(); stone_par.src = "sprites/stone_par.png";
 var stone_par1 = new Image(); stone_par1.src = "sprites/stone_par1.png";
 var stone_par2 = new Image(); stone_par2.src = "sprites/stone_par2.png";
 var stone_item = new Image(); stone_item.src = "sprites/pebble.png";
+var bronze_item = new Image(); bronze_item.src = "sprites/bronze.png";
 var diamond_tex = new Image(); diamond_tex.src = "sprites/diamond_texture.png";
 var sapphire_tex = new Image(); sapphire_tex.src = "sprites/sapphire_texture.png";
 var amethyst_tex = new Image(); amethyst_tex.src = "sprites/amethyst_texture.png";
@@ -22,6 +40,9 @@ var emblemicon = new Image(); emblemicon.src = "sprites/emblem2.png";
 var pickicon = new Image(); pickicon.src = "sprites/pickaxe1.png";
 var emeraldicon = new Image(); emeraldicon.src = "sprites/emerald1.png";
 
+var tablatch = new Image(); tablatch.src = "sprites/TabLatch.png";
+var tablatch2 = new Image(); tablatch2.src = "sprites/TabLatch2.png";
+
 var stonepickicon2 = new Image(); stonepickicon2.src = "sprites/pickaxe.png";
 var bronzepickicon2 = new Image(); bronzepickicon2.src = "sprites/pickaxe_bronze.png";
 
@@ -30,8 +51,15 @@ var stonedwarf_2 = new Image(); stonedwarf_2.src = "sprites/dwarf_stone2.png";
 var stonedwarf_3 = new Image(); stonedwarf_3.src = "sprites/dwarf_stone3.png";
 var stonedwarf_4 = new Image(); stonedwarf_4.src = "sprites/dwarf_stone4.png";
 var stonedwarf_5 = new Image(); stonedwarf_5.src = "sprites/dwarf_stone5.png";
+var bronzedwarf_1 = new Image(); bronzedwarf_1.src = "sprites/dwarf_bronze1.png";
+var bronzedwarf_2 = new Image(); bronzedwarf_2.src = "sprites/dwarf_bronze2.png";
+var bronzedwarf_3 = new Image(); bronzedwarf_3.src = "sprites/dwarf_bronze3.png";
+var bronzedwarf_4 = new Image(); bronzedwarf_4.src = "sprites/dwarf_bronze4.png";
+var bronzedwarf_5 = new Image(); bronzedwarf_5.src = "sprites/dwarf_bronze5.png";
 
 var shopmid = new Image(); shopmid.src = "sprites/shop_middle.png";
+var footer = new Image(); footer.src = "sprites/footer.png";
+var spokes = new Image(); spokes.src = "sprites/spokes.png";
 
 var logo = new Image(); logo.src = "extra/logo5.png";
 
@@ -87,9 +115,11 @@ var mine8 = new Audio(); mine8.src = "sfx/Mine8.wav";
 var shop_in = new Audio(); shop_in.src = "sfx/openpack.wav";
 var shop_out = new Audio(); shop_out.src = "sfx/closepack.wav";
 var stone_pickup = new Audio(); stone_pickup.src = "sfx/CollectStone.wav";
+var bronze_pickup = new Audio(); bronze_pickup.src = "sfx/CollectStone.wav";
 var buy = new Audio(); buy.src = "sfx/Purchase.wav";
 var sell = new Audio(); sell.src = "sfx/Purchase_inv.wav";
 var click1 = new Audio(); click1.src = "sfx/click.wav";
+var switch1 = new Audio(); switch1.src = "sfx/switch.wav";
 var fail = new Audio(); fail.src = "sfx/Failed.wav";
 
 
@@ -110,27 +140,32 @@ function SPick(){
 
 //objects
 var Key = {shift:false,ctrl:false};
-var pick = {stone:1,bronze:0,silver:0,gold:0,ruby:0,emerald:0,sapphire:0,diamond:0,amethyst:0,quartz:0};
+var pick = {stone:1,bronze:0,silver:0,gold:0,ruby:0,emerald:0,sapphire:0,diamond:0,amethyst:0,quartz:0,onyx:0,sardonyx:0,opal:0};
 var stone = {clicks:0,x:500,y:300,width:200,spr:stone1,dur:10};
 var Shops = {x:300,slot:0,scroll:[0,0,0]}
+var Statmenu = {x:300,slot:0,scroll:[0,0,0]}
 var Helpers = [];
 var Upgrades = [];
 /*	{name:"Test",color:"#345"};
 	{name:"dfg",color:"#ddd"};*/
-var stats = {clicks:0,stone:0,bronze:-1,silver:-1,gold:-1,ruby:-1,emerald:-1,sapphire:-1,diamond:-1,amethyst:-1,quartz:-1};
-var statsadd = {stone:0,bronze:0,silver:0,gold:0,ruby:0,emerald:0,sapphire:0,diamond:0,amethyst:0,quartz:0}
+var stats = {clicks:0,stone:0,bronze:-1,silver:-1,gold:-1,ruby:-1,emerald:-1,sapphire:-1,diamond:-1,amethyst:-1,quartz:-1,onyx:-1,sardonyx:-1,opal:-1};
+//var statsadd = {stone:0,bronze:0,silver:0,gold:0,ruby:0,emerald:0,sapphire:0,diamond:0,amethyst:0,quartz:0,onyx:0,sardonyx:0,opal:0}
 var particles = [];
 var helper1 = new Helper("Stone Dwarf","S",1,1,10,5,"S",1,false,stonedwarf_1);Helpers.push(helper1);
 var helper1 = new Helper("Stone DecaDwarf","S",1,10,100,59,"S",1,true,stonedwarf_2);Helpers.push(helper1);
 var helper1 = new Helper("Stone CentaDwarf","S",1,100,1000,599,"S",1,true,stonedwarf_3);Helpers.push(helper1);
 var helper1 = new Helper("Stone KiloDwarf","S",1,1000,10000,5999,"S",1,true,stonedwarf_4);Helpers.push(helper1);
 var helper1 = new Helper("Stone LakhDwarf","S",1,100000,1000000,599999,"S",1,true,stonedwarf_5);Helpers.push(helper1);
-var helper1 = new Helper("Bronze Dwarf","B",2,1,10,7,"B",2,true);Helpers.push(helper1);
-var helper1 = new Helper("Bronze DecaDwarf","B",2,10,100,90,"B",2,true);Helpers.push(helper1);
-var helper1 = new Helper("Bronze CentaDwarf","B",2,100,1000,119,"B",2,true);Helpers.push(helper1);
+var helper1 = new Helper("Bronze Dwarf","B",2,1,10,7,"B",2,true,bronzedwarf_1);Helpers.push(helper1);
+var helper1 = new Helper("Bronze DecaDwarf","B",2,10,110,79,"B",2,true,bronzedwarf_2);Helpers.push(helper1);
+var helper1 = new Helper("Bronze CentaDwarf","B",2,100,1100,799,"B",2,true,bronzedwarf_3);Helpers.push(helper1);
+var helper1 = new Helper("Bronze KiloDwarf","B",2,1000,11000,7999,"B",2,true,bronzedwarf_4);Helpers.push(helper1);
+var helper1 = new Helper("Bronze LakhDwarf","B",2,10000,110000,79999,"B",2,true,bronzedwarf_5);Helpers.push(helper1);
 
-var upgrade1 = new Upgrade("Bronze Pick",1,"S",1,1,250,false,bronzepickicon2,"Mine Bronze from","the Infinite Stone");Upgrades.push(upgrade1);
-var upgrade1 = new Upgrade("Dual-wield",2,"S",1,1,250,true,stonepickicon2,"Mine twice as","much Stone");Upgrades.push(upgrade1);
+var upgrade1 = new Upgrade("Sharpen",1,"S",1,1,5,4,false,stonepickicon2,"Stone pick is","twice as efficient");Upgrades.push(upgrade1);
+var upgrade1 = new Upgrade("Dual-wield",2,"S",1,1,20,5,true,stonepickicon2,"Mine twice as","much Stone");Upgrades.push(upgrade1);
+var upgrade1 = new Upgrade("Bronze Pickaxe",3,"S",1,1,299,1,true,bronzepickicon2,"Mine Bronze from","the Infinite Stone");Upgrades.push(upgrade1);
+var upgrade1 = new Upgrade("",4,"S",1,1,2999,10,true,stonepickicon2,"Mine +1% of","the total Stone");Upgrades.push(upgrade1);
 
 function Bound(x1, y1, x2, y2, r1, r2){
 	if( x1 > x2-r1 && x1 < x2+r1 && y1 > y2-r2 && y1 < y2+r2 ){return true;}else{return false;};
@@ -169,8 +204,10 @@ function Helper(name,type,typen,n,cost,add,ctype,cnum,hidden,spr){
 	this.spr = spr;
 }
 
-function Upgrade(name,id,ctype,cnum,n,cost,hidden,spr,line1,line2){
-	this.name = name; this.id = id;this.type = "";
+function Upgrade(name,id,ctype,cnum,n,cost,uses,hidden,spr,line1,line2){
+	this.name = name; this.id = id; this.type = "";
+	if( uses > 0 ){ this.uses = uses }else{ uses = 1 };
+	this.n = n;
 	this.spr = spr;
 	this.cost = cost;
 	this.ctype = ctype;
@@ -186,8 +223,30 @@ function Upgrade(name,id,ctype,cnum,n,cost,hidden,spr,line1,line2){
 	this.worth = function(){
 		return StatIndex( this.cnum );
 	}
-	this.buy = function(){
-		
+	this.buy = function(n){
+		switch (this.id){
+			case 1:{
+				if( this.uses > 0){
+					RemoveIndex(this.n,this.cost);
+					stone.dur = stone.dur/2;
+					this.cost = this.cost*10;
+					this.uses--;
+				}
+				if( this.uses <= 0 ){
+					this.cost = Infinity;
+					this.hidden = true;
+				}
+				break;
+			}
+			case 2:{
+				if( this.uses > 0 ){
+					RemoveIndex(this.n,this.cost);
+					pick.stone = pick.stone*2;
+					this.cost = this.cost*5;
+				}
+				break;
+			}
+		}
 	}
 }
 
@@ -257,3 +316,4 @@ function RemoveIndex(n,x){
 		default: console.log("[RemoveIndex] error: can't recognize stat index; returning...");
 	}
 }
+
